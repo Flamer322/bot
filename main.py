@@ -12,7 +12,6 @@ print("Starting")
 f = open("key.txt", "r")
 key = f.read()
 key = key.rstrip('\n')
-key = "9923e6ca8852bd98bbd40c6546dd471d"
 
 bot = telebot.TeleBot("1594121133:AAFncSvyiQeogakz4HvSBA1bDkY77cvftrg")
 
