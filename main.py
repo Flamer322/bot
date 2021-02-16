@@ -13,7 +13,11 @@ f = open("key.txt", "r")
 key = f.read()
 key = key.rstrip('\n')
 
-bot = telebot.TeleBot("1594121133:AAFncSvyiQeogakz4HvSBA1bDkY77cvftrg")
+f = open("token.txt", "r")
+token = f.read()
+token = token.rstrip('\n')
+
+bot = telebot.TeleBot(token)
 
 conn = sqlite3.connect("users.db")
 cur = conn.cursor()
