@@ -1,6 +1,7 @@
 import re
 import time
 import telebot
+import sqlite3
 import threading
 import datetime
 from telebot import types
@@ -9,10 +10,20 @@ print("Starting")
 
 bot = telebot.TeleBot("1594121133:AAFncSvyiQeogakz4HvSBA1bDkY77cvftrg")
 
+conn = sqlite3.connect("users.db")
+cur = conn.cursor()
+
+cur.execute("""CREATE TABLE IF NOT EXISTS users(
+    user_id INT,
+    city TEXT,
+    time_h TEXT,
+    time_m TEXT);
+""")
+conn.commit()
+
 city = ""
 time_h = 0
 time_m = 0
-
 
 @bot.message_handler(content_types=["text"])
 def start(message):
@@ -36,31 +47,61 @@ def get_time(message):
     if re.fullmatch(r"\d\d:\d\d", message.text):
         time_h = int(message.text[0:2])
         time_m = int(message.text[3:5])
-        keyboard = types.InlineKeyboardMarkup()
-        key_yes = types.InlineKeyboardButton(text="Да", callback_data="yes")
-        keyboard.add(key_yes)
-        key_no = types.InlineKeyboardButton(text="Нет", callback_data="no")
-        keyboard.add(key_no)
-        question = "Твой город - " + city + ". Отправлять прогноз в " + str(time_h) + ":" + str(time_m) + ". Верно?"
-        bot.send_message(message.from_user.id, text=question, reply_markup=keyboard)
+        if time_h < 24 and time_m < 60:
+            time_h = str(time_h)
+            if time_m < 10:
+                time_m = "0" + str(time_m)
+            else:
+                time_m = str(time_m)
+            keyboard = types.InlineKeyboardMarkup()
+            key_yes = types.InlineKeyboardButton(text="Да", callback_data="yes")
+            keyboard.add(key_yes)
+            key_no = types.InlineKeyboardButton(text="Нет", callback_data="no")
+            keyboard.add(key_no)
+            question = "Твой город - " + city + ". Отправлять прогноз в " + time_h + ":" + time_m + ". Верно?"
+            bot.send_message(message.from_user.id, text=question, reply_markup=keyboard)
+        else:
+            wrong_time(message)
+    else:
+        wrong_time(message)
+
+def wrong_time(message):
+    bot.send_message(message.from_user.id, "Неправильно введено время. Пожалуйста, введите время ещё раз")
+    bot.register_next_step_handler(message, get_time)
 
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_worker(call):
     if call.data == "yes":
-        now = datetime.datetime.now()
-        bot.send_message(call.message.chat.id, str(call.message.chat.id) + " " + now.strftime("%H:%M"))
+        conn = sqlite3.connect("users.db")
+        cur = conn.cursor()
+        user = (call.message.chat.id, city, time_h, time_m)
+        cur.execute("INSERT INTO users VALUES(?, ?, ?, ?);", user)
+        conn.commit()
     elif call.data == "no":
         bot.send_message(call.message.chat.id, "Напиши /start")
 
 
 def mail():
-    now = datetime.datetime.now().second
-    time.sleep(60 - now)
+    left = (60 - datetime.datetime.now().second)
+    while (left > 0):
+        print(left)
+        time.sleep(1)
+        left -= 1
 
     while True:
-        now = datetime.datetime.now().strftime("%H:%M")
-        bot.send_message(410124654, now)
+        now_h = str(datetime.datetime.now().hour)
+        now_m = datetime.datetime.now().minute
+        if now_m< 10:
+            now_m = "0" + str(now_m)
+        else:
+            now_m = str(now_m)
+        conn = sqlite3.connect("users.db")
+        cur = conn.cursor()
+        cur.execute("SELECT user_id, city FROM users WHERE time_h = \"" + now_h + "\" AND time_m = \"" + now_m + "\"")
+        users = cur.fetchall()
+        print(users)
+
         time.sleep(60)
 
 
