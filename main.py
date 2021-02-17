@@ -99,10 +99,10 @@ def get_weather(city):
         data = res.json()
         conditions = data['weather'][0]['description']
         temp = round(data['main']['temp'])
+        return (conditions, temp)
     except Exception as e:
         print("Exception (weather):", e)
         pass
-    return (conditions, temp)
 
 
 @bot.callback_query_handler(func=lambda call: True)
