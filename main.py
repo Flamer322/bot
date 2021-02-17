@@ -46,31 +46,43 @@ def start(message):
 def get_city(message):
     global city
     city = message.text
-    bot.send_message(message.from_user.id, "В какое время по МСК тебе отправлять прогноз?"
-                                           "\nВ формате ЧЧ:ММ")
-    bot.register_next_step_handler(message, get_time)
+    city_id = get_city_id(city)
+    if not city_id:
+        bot.send_message(message.from_user.id, "Неправильное название города."
+                                               "\nПожалуйста, попробуй ещё раз")
+        bot.register_next_step_handler(message, get_city)
+    else:
+        bot.send_message(message.from_user.id, "В какое время по МСК тебе отправлять прогноз?"
+                                               "\nВ формате ЧЧ:ММ")
+        bot.register_next_step_handler(message, get_time)
 
 
 def get_time(message):
     global time_h
     global time_m
     if re.fullmatch(r"\d\d:\d\d", message.text):
+
         time_h = int(message.text[0:2])
         time_m = int(message.text[3:5])
+
         if time_h < 24 and time_m < 60:
+
             if time_h < 10:
                 time_h = "0" + str(time_h)
             else:
                 time_h = str(time_h)
+
             if time_m < 10:
                 time_m = "0" + str(time_m)
             else:
                 time_m = str(time_m)
+
             keyboard = types.InlineKeyboardMarkup()
             key_yes = types.InlineKeyboardButton(text="Да", callback_data="yes")
             keyboard.add(key_yes)
             key_no = types.InlineKeyboardButton(text="Нет", callback_data="no")
             keyboard.add(key_no)
+
             question = "Твой город - " + city + ". Отправлять прогноз в " + \
                        time_h + ":" + time_m + ". Верно?"
             bot.send_message(message.from_user.id, text=question, reply_markup=keyboard)
@@ -81,7 +93,8 @@ def get_time(message):
 
 
 def wrong_time(message):
-    bot.send_message(message.from_user.id, "Неправильно введено время. Пожалуйста, введите время ещё раз")
+    bot.send_message(message.from_user.id, "Неправильно введено время."
+                                           "\nПожалуйста, введите время ещё раз")
     bot.register_next_step_handler(message, get_time)
 
 
