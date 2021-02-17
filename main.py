@@ -58,7 +58,10 @@ def get_time(message):
         time_h = int(message.text[0:2])
         time_m = int(message.text[3:5])
         if time_h < 24 and time_m < 60:
-            time_h = str(time_h)
+            if time_h < 10:
+                time_h = "0" + str(time_h)
+            else:
+                time_h = str(time_h)
             if time_m < 10:
                 time_m = "0" + str(time_m)
             else:
@@ -82,17 +85,20 @@ def wrong_time(message):
     bot.register_next_step_handler(message, get_time)
 
 
-def get_weather(city):
-    city_id = 0
+def get_city_id(city):
     try:
         res = requests.get("http://api.openweathermap.org/data/2.5/find",
                            params={'q': city, 'type': 'like', 'units': 'metric', 'APPID': key})
         data = res.json()
         city_id = data['list'][0]['id']
+        return city_id
     except Exception as e:
         print("Exception (find):", e)
         pass
 
+
+def get_weather(city):
+    city_id = get_city_id(city)
     try:
         res = requests.get("http://api.openweathermap.org/data/2.5/weather",
                            params={'id': city_id, 'units': 'metric', 'lang': 'ru', 'APPID': key})
@@ -133,12 +139,19 @@ def mail():
         left -= 1
 
     while True:
-        now_h = str(datetime.datetime.now().hour)
+        now_h = datetime.datetime.now().hour
         now_m = datetime.datetime.now().minute
+
+        if now_h< 10:
+            now_h = "0" + str(now_h)
+        else:
+            now_h = str(now_h)
+
         if now_m< 10:
             now_m = "0" + str(now_m)
         else:
             now_m = str(now_m)
+
         conn = sqlite3.connect("users.db")
         cur = conn.cursor()
 
