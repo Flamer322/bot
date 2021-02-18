@@ -1,23 +1,9 @@
-import re
-import time
-import requests
-import telebot
-import sqlite3
-import threading
-import datetime
-from telebot import types
+import config
+from config import *
 
 print("Starting")
 
-f = open("key.txt", "r")
-key = f.read()
-key = key.rstrip('\n')
-
-f = open("token.txt", "r")
-token = f.read()
-token = token.rstrip('\n')
-
-bot = telebot.TeleBot(token)
+bot = telebot.TeleBot(config.token)
 
 conn = sqlite3.connect("users.db")
 cur = conn.cursor()
@@ -30,78 +16,92 @@ cur.execute("""CREATE TABLE IF NOT EXISTS users(
 """)
 conn.commit()
 
-city = ""
-time_h = 0
-time_m = 0
 
 @bot.message_handler(content_types=["text"])
 def start(message):
+    config.user_id = message.from_user.id
     if message.text == "/start":
-        bot.send_message(message.from_user.id, "Город?")
-        bot.register_next_step_handler(message, get_city)
+        set_city(message)
     else:
-        bot.send_message(message.from_user.id, "Напиши /start")
+        bot.send_message(message.from_user.id, "Начните работу с ботом\n\nИспользуйте команду /start")
+
+
+def set_city(message):
+    bot.send_message(message.from_user.id, "Укажите Ваш город")
+    bot.register_next_step_handler(message, get_city)
 
 
 def get_city(message):
-    global city
-    city = message.text
-    city_id = get_city_id(city)
+    if message.text == "/start":
+        return start(message)
+    config.city = abb_to_city(message.text)
+    city_id = get_city_id(config.city)
     if not city_id:
-        bot.send_message(message.from_user.id, "Неправильное название города."
-                                               "\nПожалуйста, попробуй ещё раз")
-        bot.register_next_step_handler(message, get_city)
+        wrong_city(message)
+    elif config.changed:
+        keyboard_confirmation(message)
+        config.changed = False
     else:
-        bot.send_message(message.from_user.id, "В какое время по МСК тебе отправлять прогноз?"
-                                               "\nВ формате ЧЧ:ММ")
-        bot.register_next_step_handler(message, get_time)
+        set_time(message)
+
+
+def set_time(message):
+    bot.send_message(message.from_user.id, "Выберите время (Москва, UTC+3), в которое Вы желаете получать прогноз"
+                                     "\n\nУкажите время в формате ЧЧ:ММ")
+    bot.register_next_step_handler(message, get_time)
 
 
 def get_time(message):
-    global time_h
-    global time_m
-    if re.fullmatch(r"\d\d:\d\d", message.text):
+    if message.text == "/start":
+        return start(message)
+    if re.fullmatch(r"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
+        separator_index = message.text.find(":")
+        config.time_h = message.text[0:separator_index]
+        config.time_m = message.text[separator_index + 1:len(message.text)]
 
-        time_h = int(message.text[0:2])
-        time_m = int(message.text[3:5])
+        if int(config.time_h) < 10:
+            config.time_h = "0" + config.time_h
 
-        if time_h < 24 and time_m < 60:
+        if int(config.time_m) < 10:
+            config.time_m = "0" + config.time_m
 
-            if time_h < 10:
-                time_h = "0" + str(time_h)
-            else:
-                time_h = str(time_h)
-
-            if time_m < 10:
-                time_m = "0" + str(time_m)
-            else:
-                time_m = str(time_m)
-
-            keyboard = types.InlineKeyboardMarkup()
-            key_yes = types.InlineKeyboardButton(text="Да", callback_data="yes")
-            keyboard.add(key_yes)
-            key_no = types.InlineKeyboardButton(text="Нет", callback_data="no")
-            keyboard.add(key_no)
-
-            question = "Твой город - " + city + ". Отправлять прогноз в " + \
-                       time_h + ":" + time_m + ". Верно?"
-            bot.send_message(message.from_user.id, text=question, reply_markup=keyboard)
-        else:
-            wrong_time(message)
+        keyboard_confirmation(message)
     else:
         wrong_time(message)
 
 
+def keyboard_confirmation(message):
+    keyboard = types.InlineKeyboardMarkup()
+    key_yes = types.InlineKeyboardButton(text="Да", callback_data="yes")
+    keyboard.add(key_yes)
+    # key_set_city = types.InlineKeyboardButton(text="Изменить город", callback_data="set_city")
+    # keyboard.add(key_set_city)
+    # key_set_time = types.InlineKeyboardButton(text="Изменить время", callback_data="set_time")
+    # keyboard.add(key_set_time)
+    key_no = types.InlineKeyboardButton(text="Нет", callback_data="no")
+    keyboard.add(key_no)
+
+    question = "Ваш город " + config.city + ".\nВы хотите получать прогноз в " + \
+               config.time_h + ":" + config.time_m + ".\n\nВерно?"
+    bot.send_message(message.from_user.id, text=question, reply_markup=keyboard)
+
+
+def wrong_city(message):
+    bot.send_message(message.from_user.id, "Неправильное название города."
+                                     "\nПожалуйста, попробуй ещё раз")
+    bot.register_next_step_handler(message, get_city)
+
+
 def wrong_time(message):
     bot.send_message(message.from_user.id, "Неправильно введено время."
-                                           "\nПожалуйста, введите время ещё раз")
+                                     "\nПожалуйста, введите время ещё раз")
     bot.register_next_step_handler(message, get_time)
 
 
 def get_city_id(city):
     try:
         res = requests.get("http://api.openweathermap.org/data/2.5/find",
-                           params={'q': city, 'type': 'like', 'units': 'metric', 'APPID': key})
+                           params={'q': city, 'type': 'like', 'units': 'metric', 'APPID': config.key})
         data = res.json()
         city_id = data['list'][0]['id']
         return city_id
@@ -114,7 +114,7 @@ def get_weather(city):
     city_id = get_city_id(city)
     try:
         res = requests.get("http://api.openweathermap.org/data/2.5/weather",
-                           params={'id': city_id, 'units': 'metric', 'lang': 'ru', 'APPID': key})
+                           params={'id': city_id, 'units': 'metric', 'lang': 'ru', 'APPID': config.key})
         data = res.json()
         conditions = data['weather'][0]['description']
         temp = round(data['main']['temp'])
@@ -124,13 +124,19 @@ def get_weather(city):
         pass
 
 
+def abb_to_city(message):
+    if d.get(message.upper()):
+        return d.get(message.upper())
+    return message
+
+
 @bot.callback_query_handler(func=lambda call: True)
 def callback_worker(call):
     if call.data == "yes":
+        bot.send_message(call.message.chat.id, "Вы будете получать прогноз каждый день в указанное время")
         conn = sqlite3.connect("users.db")
         cur = conn.cursor()
-        user = (call.message.chat.id, city, time_h, time_m)\
-
+        user = (call.message.chat.id, config.city, config.time_h, config.time_m)
         cur.execute("SELECT user_id FROM users WHERE user_id = \"" + str(user[0]) +
                     "\" AND city = \"" + user[1] + "\" AND time_h = \"" + user[2] +
                     "\" AND time_m = \"" + user[3] + "\"")
@@ -140,7 +146,12 @@ def callback_worker(call):
             cur.execute("INSERT INTO users VALUES(?, ?, ?, ?);", user)
         conn.commit()
     elif call.data == "no":
-        bot.send_message(call.message.chat.id, "Напиши /start")
+        bot.send_message(call.message.chat.id, "Введите команду /start")
+    # elif call.data == "set_city":
+    #    config.changed = True
+    #    return set_city(call.message)
+    # elif call.data == "set_time":
+    #    return set_time(call.message)
 
 
 def mail():
@@ -155,12 +166,12 @@ def mail():
         now_h = datetime.datetime.now().hour
         now_m = datetime.datetime.now().minute
 
-        if now_h< 10:
+        if now_h < 10:
             now_h = "0" + str(now_h)
         else:
             now_h = str(now_h)
 
-        if now_m< 10:
+        if now_m < 10:
             now_m = "0" + str(now_m)
         else:
             now_m = str(now_m)
