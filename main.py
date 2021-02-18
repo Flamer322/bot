@@ -55,16 +55,17 @@ def del_for(message):
     if message.text == "Я передумал(а)":
         start(message)
     else:
-        list = []
-        list.add()
-        conn = sqlite3.connect("users.db")
-        cur = conn.cursor()
-        cur.execute("SELECT city, time_h, time_m FROM users WHERE user_id = ?", (message.from_user.id,))
-        entries = cur.fetchall()
-        if not entries:
-            bot.send_message(message.from_user.id, "Вы не добавляли никаких прогнозов")
-        else:
-            print("qwe")
+        print("qwe")
+        #list = []
+        #list.add()
+        #conn = sqlite3.connect("users.db")
+        #cur = conn.cursor()
+        #cur.execute("SELECT city, time_h, time_m FROM users WHERE user_id = ?", (message.from_user.id,))
+        #entries = cur.fetchall()
+        #if not entries:
+        #    bot.send_message(message.from_user.id, "Вы не добавляли никаких прогнозов")
+        #else:
+        #    print("qwe")
             #markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
             #markup.add("Я передумал(а)")
             #for entry in entries:

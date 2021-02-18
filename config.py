@@ -7,7 +7,7 @@ import datetime
 import telebot
 from telebot import types
 
-token = "1613069857:AAFLVPykKyrWMCXKm5AIqxLjJ93ERNoi8As"
+token = "1594121133:AAFncSvyiQeogakz4HvSBA1bDkY77cvftrg"
 key = "9923e6ca8852bd98bbd40c6546dd471d"
 city = ""
 time_h = ""
