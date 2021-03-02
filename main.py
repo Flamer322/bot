@@ -46,7 +46,7 @@ def del_st(message):
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         markup.add("Я передумал(а)")
         for entry in entries:
-            markup.add(entry[0] + "\n" + entry[1] + ":" + entry[2])
+            markup.add(entry[0] + " " + entry[1] + ":" + entry[2])
         bot.send_message(message.chat.id, "Выбери прогноз, который нужно удалить", reply_markup=markup)
         bot.register_next_step_handler(message, del_for)
 
@@ -55,9 +55,12 @@ def del_for(message):
     if message.text == "Я передумал(а)":
         start(message)
     else:
-        print("qwe")
-        #list = []
-        #list.add()
+        text = message.text
+        if re.match(r"([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
+            print("qwe")
+        #"SOME_CITY HH:MM"
+
+
         #conn = sqlite3.connect("users.db")
         #cur = conn.cursor()
         #cur.execute("SELECT city, time_h, time_m FROM users WHERE user_id = ?", (message.from_user.id,))
