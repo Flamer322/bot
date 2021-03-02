@@ -11,8 +11,7 @@ cur = conn.cursor()
 cur.execute("""CREATE TABLE IF NOT EXISTS users(
     user_id INT,
     city TEXT,
-    time_h TEXT,
-    time_m TEXT);
+    time TEXT;
 """)
 conn.commit()
 
@@ -30,15 +29,15 @@ def start(message):
     elif message.text == "Удалить":
         del_st(message)
     elif message.text == "Изменить":
-        bot.send_message(message.chat.id, "WIP")
+        ch_st(message)
     else:
         bot.send_message(message.from_user.id, "Начните работу с ботом\n\nИспользуйте команду /start")
 
 
-def del_st(message):
+def ch_st(message):
     conn = sqlite3.connect("users.db")
     cur = conn.cursor()
-    cur.execute("SELECT city, time_h, time_m FROM users WHERE user_id = ?", (message.from_user.id,))
+    cur.execute("SELECT city, time FROM users WHERE user_id = ?", (message.from_user.id,))
     entries = cur.fetchall()
     if not entries:
         bot.send_message(message.from_user.id, "Вы не добавляли никаких прогнозов")
@@ -46,8 +45,24 @@ def del_st(message):
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         markup.add("Я передумал(а)")
         for entry in entries:
-            markup.add(entry[0] + " " + entry[1] + ":" + entry[2])
-        bot.send_message(message.chat.id, "Выбери прогноз, который нужно удалить", reply_markup=markup)
+            markup.add(entry[0] + "\n" + entry[1])
+        bot.send_message(message.chat.id, "Выберите прогноз, который нужно изменить", reply_markup=markup)
+        bot.register_next_step_handler(message, del_for)
+
+
+def del_st(message):
+    conn = sqlite3.connect("users.db")
+    cur = conn.cursor()
+    cur.execute("SELECT city, time FROM users WHERE user_id = ?", (message.from_user.id,))
+    entries = cur.fetchall()
+    if not entries:
+        bot.send_message(message.from_user.id, "Вы не добавляли никаких прогнозов")
+    else:
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+        markup.add("Я передумал(а)")
+        for entry in entries:
+            markup.add(entry[0] + "\n" + entry[1])
+        bot.send_message(message.chat.id, "Выберите прогноз, который нужно удалить", reply_markup=markup)
         bot.register_next_step_handler(message, del_for)
 
 
@@ -55,27 +70,9 @@ def del_for(message):
     if message.text == "Я передумал(а)":
         start(message)
     else:
-        text = message.text
-        if re.match(r"([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
-            print("qwe")
-        #"SOME_CITY HH:MM"
-
-
-        #conn = sqlite3.connect("users.db")
-        #cur = conn.cursor()
-        #cur.execute("SELECT city, time_h, time_m FROM users WHERE user_id = ?", (message.from_user.id,))
-        #entries = cur.fetchall()
-        #if not entries:
-        #    bot.send_message(message.from_user.id, "Вы не добавляли никаких прогнозов")
-        #else:
-        #    print("qwe")
-            #markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
-            #markup.add("Я передумал(а)")
-            #for entry in entries:
-            #    markup.add(entry[0] + "\n" + entry[1] + ":" + entry[2])
-            #bot.send_message(message.chat.id, "Выбери прогноз, который нужно удалить", reply_markup=markup)
-            #bot.register_next_step_handler(message, del_for)
-
+        if re.search(r"\n([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
+            text = message.text.split("\n")
+            print(text)
 
 
 def set_city(message):
@@ -107,16 +104,7 @@ def get_time(message):
     if message.text == "/start":
         return start(message)
     if re.fullmatch(r"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
-        separator_index = message.text.find(":")
-        config.time_h = message.text[0:separator_index]
-        config.time_m = message.text[separator_index + 1:len(message.text)]
-
-        if int(config.time_h) < 10:
-            config.time_h = "0" + config.time_h
-
-        if int(config.time_m) < 10:
-            config.time_m = "0" + config.time_m
-
+        config.time = message.text
         keyboard_confirmation(message)
     else:
         wrong_time(message)
@@ -134,7 +122,7 @@ def keyboard_confirmation(message):
     keyboard.add(key_no)
 
     question = "Ваш город " + config.city + ".\nВы хотите получать прогноз в " + \
-               config.time_h + ":" + config.time_m + ".\n\nВерно?"
+               config.time + ".\n\nВерно?"
     bot.send_message(message.from_user.id, text=question, reply_markup=keyboard)
 
 
@@ -187,11 +175,11 @@ def callback_worker(call):
     if call.data == "yes":
         conn = sqlite3.connect("users.db")
         cur = conn.cursor()
-        user = (call.message.chat.id, config.city, config.time_h, config.time_m)
-        cur.execute("SELECT user_id FROM users WHERE user_id = ? AND city = ? AND time_h = ? AND time_m = ?", user)
+        user = (call.message.chat.id, config.city, config.time)
+        cur.execute("SELECT user_id FROM users WHERE user_id = ? AND city = ? AND time = ?", user)
         users = cur.fetchall()
         if not users:
-            cur.execute("INSERT INTO users VALUES(?, ?, ?, ?);", user)
+            cur.execute("INSERT INTO users VALUES(?, ?, ?);", user)
             conn.commit()
             bot.send_message(call.message.chat.id, "Вы будете получать прогноз каждый день в указанное время")
         else:
@@ -214,23 +202,12 @@ def mail():
         left -= 1
 
     while True:
-        now_h = datetime.datetime.now().hour
-        now_m = datetime.datetime.now().minute
-
-        if now_h < 10:
-            now_h = "0" + str(now_h)
-        else:
-            now_h = str(now_h)
-
-        if now_m < 10:
-            now_m = "0" + str(now_m)
-        else:
-            now_m = str(now_m)
+        now = datetime.datetime.now().strftime("%H:%M")
 
         conn = sqlite3.connect("users.db")
         cur = conn.cursor()
 
-        cur.execute("SELECT user_id, city FROM users WHERE time_h = ? AND time_m = ?", (now_h, now_m))
+        cur.execute("SELECT user_id, city FROM users WHERE time = ?", (time,))
 
         users = cur.fetchall()
 
