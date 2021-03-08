@@ -1,5 +1,5 @@
 import re
-import time
+from time import sleep
 import requests
 import sqlite3
 import threading

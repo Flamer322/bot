@@ -11,30 +11,34 @@ cur = conn.cursor()
 cur.execute("""CREATE TABLE IF NOT EXISTS users(
     user_id INT,
     city TEXT,
-    time TEXT;
+    time TEXT);
 """)
 conn.commit()
+
+
+def start_msg(chat_id):
+    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+    list_items = ["Добавить", "Удалить", "Изменить"]
+    for item in list_items:
+        markup.add(item)
+    bot.send_message(chat_id, "Выберите пункт меню", reply_markup=markup)
 
 
 @bot.message_handler(content_types=["text"])
 def start(message):
     if message.text == "/start":
-        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
-        list_items = ["Добавить", "Удалить", "Изменить"]
-        for item in list_items:
-            markup.add(item)
-        bot.send_message(message.chat.id, "Привет", reply_markup=markup)
+        start_msg(message.chat.id)
     elif message.text == "Добавить":
         set_city(message)
     elif message.text == "Удалить":
-        del_st(message)
+        del_1(message)
     elif message.text == "Изменить":
-        ch_st(message)
+        ch_1(message)
     else:
-        bot.send_message(message.from_user.id, "Начните работу с ботом\n\nИспользуйте команду /start")
+        start_msg(message.from_user.id)
 
 
-def ch_st(message):
+def ch_1(message):
     conn = sqlite3.connect("users.db")
     cur = conn.cursor()
     cur.execute("SELECT city, time FROM users WHERE user_id = ?", (message.from_user.id,))
@@ -47,10 +51,48 @@ def ch_st(message):
         for entry in entries:
             markup.add(entry[0] + "\n" + entry[1])
         bot.send_message(message.chat.id, "Выберите прогноз, который нужно изменить", reply_markup=markup)
-        bot.register_next_step_handler(message, del_for)
+        bot.register_next_step_handler(message, ch_2)
 
 
-def del_st(message):
+def ch_2(message):
+    if message.text == "Я передумал(а)":
+        start(message)
+    else:
+        if re.search(r"\n([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
+            text = message.text.split("\n")
+            conn = sqlite3.connect("users.db")
+            cur = conn.cursor()
+            cur.execute("SELECT user_id, city, time FROM users WHERE user_id = ? AND city = ? AND time = ?",
+                        (message.from_user.id, text[0], text[1]))
+            entries = cur.fetchall()
+            if not entries:
+                bot.send_message(message.from_user.id, "Введён неправильный прогноз")
+            else:
+                markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+                list_items = ["Город", "Время", "Город и время"]
+                for item in list_items:
+                    markup.add(item)
+                bot.send_message(message.from_user.id, "Что вы хотите изменить", reply_markup=markup)
+                bot.register_next_step_handler(message, ch_3)
+        else:
+            bot.send_message(message.from_user.id, "Введён неправильный прогноз")
+            start_msg(message.from_user.id)
+
+
+def ch_3(message):
+    if message.text in ["Город", "Время", "Город и время"]:
+        if message.text == "Город":
+            print("1")
+        elif message.text == "Время":
+            print("2")
+        else:
+            print("3")
+    else:
+        print("4")
+    start_msg(message.from_user.id)
+
+
+def del_1(message):
     conn = sqlite3.connect("users.db")
     cur = conn.cursor()
     cur.execute("SELECT city, time FROM users WHERE user_id = ?", (message.from_user.id,))
@@ -63,16 +105,30 @@ def del_st(message):
         for entry in entries:
             markup.add(entry[0] + "\n" + entry[1])
         bot.send_message(message.chat.id, "Выберите прогноз, который нужно удалить", reply_markup=markup)
-        bot.register_next_step_handler(message, del_for)
+        bot.register_next_step_handler(message, del_2)
 
 
-def del_for(message):
+def del_2(message):
     if message.text == "Я передумал(а)":
         start(message)
     else:
         if re.search(r"\n([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
             text = message.text.split("\n")
-            print(text)
+            conn = sqlite3.connect("users.db")
+            cur = conn.cursor()
+            cur.execute("SELECT user_id, city, time FROM users WHERE user_id = ? AND city = ? AND time = ?",
+                        (message.from_user.id, text[0], text[1]))
+            entries = cur.fetchall()
+            if not entries:
+                bot.send_message(message.from_user.id, "Введён неправильный прогноз")
+            else:
+                bot.send_message(message.from_user.id, "Прогноз удалён")
+                cur.execute("DELETE FROM users WHERE user_id = ? AND city = ? AND time = ?",
+                            (message.from_user.id, text[0], text[1]))
+                conn.commit()
+        else:
+            bot.send_message(message.from_user.id, "Введён неправильный прогноз")
+        start_msg(message.from_user.id)
 
 
 def set_city(message):
@@ -96,7 +152,7 @@ def get_city(message):
 
 def set_time(message):
     bot.send_message(message.from_user.id, "Выберите время (Москва, UTC+3), в которое Вы желаете получать прогноз"
-                                     "\n\nУкажите время в формате ЧЧ:ММ")
+                                           "\n\nУкажите время в формате ЧЧ:ММ")
     bot.register_next_step_handler(message, get_time)
 
 
@@ -128,13 +184,13 @@ def keyboard_confirmation(message):
 
 def wrong_city(message):
     bot.send_message(message.from_user.id, "Неправильное название города."
-                                     "\nПожалуйста, попробуй ещё раз")
+                                           "\nПожалуйста, попробуй ещё раз")
     bot.register_next_step_handler(message, get_city)
 
 
 def wrong_time(message):
     bot.send_message(message.from_user.id, "Неправильно введено время."
-                                     "\nПожалуйста, введите время ещё раз")
+                                           "\nПожалуйста, введите время ещё раз")
     bot.register_next_step_handler(message, get_time)
 
 
@@ -158,7 +214,7 @@ def get_weather(city):
         data = res.json()
         conditions = data['weather'][0]['description']
         temp = round(data['main']['temp'])
-        return (conditions, temp)
+        return conditions, temp
     except Exception as e:
         print("Exception (weather):", e)
         pass
@@ -179,13 +235,15 @@ def callback_worker(call):
         cur.execute("SELECT user_id FROM users WHERE user_id = ? AND city = ? AND time = ?", user)
         users = cur.fetchall()
         if not users:
-            cur.execute("INSERT INTO users VALUES(?, ?, ?);", user)
+            cur.execute("INSERT INTO users VALUES(?, ?, ?)", user)
             conn.commit()
             bot.send_message(call.message.chat.id, "Вы будете получать прогноз каждый день в указанное время")
         else:
             bot.send_message(call.message.chat.id, "Вы уже добавили такой прогноз")
     elif call.data == "no":
-        bot.send_message(call.message.chat.id, "Введите команду /start")
+        print("TO DO")
+    start_msg(call.message.chat.id)
+
     # elif call.data == "set_city":
     #    config.changed = True
     #    return set_city(call.message)
@@ -195,10 +253,10 @@ def callback_worker(call):
 
 def mail():
     left = (60 - datetime.datetime.now().second)
-    while (left > 0):
+    while left > 0:
         if left % 5 == 0:
             print(str(left) + "s left")
-        time.sleep(1)
+        sleep(1)
         left -= 1
 
     while True:
@@ -207,7 +265,7 @@ def mail():
         conn = sqlite3.connect("users.db")
         cur = conn.cursor()
 
-        cur.execute("SELECT user_id, city FROM users WHERE time = ?", (time,))
+        cur.execute("SELECT user_id, city FROM users WHERE time = ?", (now,))
 
         users = cur.fetchall()
 
@@ -216,7 +274,7 @@ def mail():
             message = user[1] + "\nПогода: " + weather[0] + "\nТемпература: " + str(weather[1])
             bot.send_message(user[0], message)
 
-        time.sleep(60)
+        sleep(60)
 
 
 mail = threading.Thread(target=mail, args=(), daemon=True)
