@@ -160,7 +160,7 @@ def get_time(message):
     if message.text == "/start":
         return start(message)
     if re.fullmatch(r"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
-        config.time = message.text
+        config.time = message.text.zfill(5)
         keyboard_confirmation(message)
     else:
         wrong_time(message)
