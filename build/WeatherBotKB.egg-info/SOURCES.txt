@@ -1,0 +1,9 @@
+README.md
+setup.py
+WeatherBotKB.egg-info/PKG-INFO
+WeatherBotKB.egg-info/SOURCES.txt
+WeatherBotKB.egg-info/dependency_links.txt
+WeatherBotKB.egg-info/requires.txt
+WeatherBotKB.egg-info/top_level.txt
+weather/config.py
+weather/main.py

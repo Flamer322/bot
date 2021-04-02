@@ -1,0 +1,465 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ru" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>main module &mdash; документация WeatherBot 0.0.1</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/translations.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Алфавитный указатель" href="genindex.html" />
+    <link rel="search" title="Поиск" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> WeatherBot
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Поиск в документации" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">main module</a></li>
+</ul>
+</div>
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">WeatherBot</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>main module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/main.rst.txt" rel="nofollow"> Просмотреть исходный код страницы</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-main">
+<span id="main-module"></span><h1>main module<a class="headerlink" href="#module-main" title="Ссылка на этот заголовок">¶</a></h1>
+<dl class="py function">
+<dt id="main.abb_to_city">
+<code class="sig-prename descclassname"><span class="pre">main.</span></code><code class="sig-name descname"><span class="pre">abb_to_city</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#main.abb_to_city" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Функция преобразования сокращений в название города</p>
+<p>На вход получает сообщение, содержащее сокращённое название города, проверяет его наличие в словаре
+и, в случае успеха, возвращает название города.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Параметры</dt>
+<dd class="field-odd"><p><strong>city_abbreviation</strong> – Сокращение города</p>
+</dd>
+<dt class="field-even">Результат</dt>
+<dd class="field-even"><p>Название города</p>
+</dd>
+<dt class="field-odd">Тип результата</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="main.callback_worker">
+<code class="sig-prename descclassname"><span class="pre">main.</span></code><code class="sig-name descname"><span class="pre">callback_worker</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#main.callback_worker" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Обработчик ответов пользователей</p>
+<p>На вход принимает ответ (подтверждение или отказ) пользователя в виде строк <cite>yes</cite>/<cite>no</cite>
+При положительном ответе информация заносится в базу данных, иначе выводит подсказку о начале работы с ботом.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Параметры</dt>
+<dd class="field-odd"><p><strong>callback</strong> – Выбор <cite>yes</cite>/<cite>no</cite> пользователя</p>
+</dd>
+<dt class="field-even">Результат</dt>
+<dd class="field-even"><p>Информация о добавлении в базу данных или подсказка о начале работы с ботом</p>
+</dd>
+<dt class="field-odd">Тип результата</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="main.del_st">
+<code class="sig-prename descclassname"><span class="pre">main.</span></code><code class="sig-name descname"><span class="pre">del_st</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#main.del_st" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Удаление прогноза из расписания (записи из БД)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Параметры</dt>
+<dd class="field-odd"><p><strong>message</strong> (<em>messageObject</em>) – Пользовательское сообщение с текстом элемента расписания</p>
+</dd>
+<dt class="field-even">Результат</dt>
+<dd class="field-even"><p><cite>True</cite>, если удалена успешно, иначе <cite>False</cite></p>
+</dd>
+<dt class="field-odd">Тип результата</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="main.get_city">
+<code class="sig-prename descclassname"><span class="pre">main.</span></code><code class="sig-name descname"><span class="pre">get_city</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#main.get_city" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Функция получения города и проверки его корректности</p>
+<p>Принимает на вход строковую переменную с информацией о городе,
+после чего вызывает функцию установки времени set_time() или выводит сообщение о неверном вводе города.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Параметры</dt>
+<dd class="field-odd"><p><strong>message</strong> (<em>messageObject</em>) – Пользовательское сообщение с названием города</p>
+</dd>
+<dt class="field-even">Результат</dt>
+<dd class="field-even"><p>Сообщение об успехе или ошибке получения города</p>
+</dd>
+<dt class="field-odd">Тип результата</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="main.get_city_id">
+<code class="sig-prename descclassname"><span class="pre">main.</span></code><code class="sig-name descname"><span class="pre">get_city_id</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">city</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#main.get_city_id" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Функция получения идентификатора города</p>
+<p>На вход получает сообщение с информацией о городе,
+после чего отправляет GET-запрос к OpenWeatherMap API, в результате получает идентификатор
+или сообщение о вызванном исключении, если не удалось получить JSON с информацией.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Параметры</dt>
+<dd class="field-odd"><p><strong>city</strong> – Город</p>
+</dd>
+<dt class="field-even">Результат</dt>
+<dd class="field-even"><p>Идентификатор города</p>
+</dd>
+<dt class="field-odd">Тип результата</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="main.get_time">
+<code class="sig-prename descclassname"><span class="pre">main.</span></code><code class="sig-name descname"><span class="pre">get_time</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#main.get_time" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Функция получения времени и проверки его корректности</p>
+<p>Принимает на вход пользовательское сообщение с информацией о времени,
+после чего вызывает функцию подтверждения keyboard_confirmation() или выводит сообщение о неверном вводе времени.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Параметры</dt>
+<dd class="field-odd"><p><strong>message</strong> (<em>messageObject</em>) – Пользовательское сообщение с информацией о времени</p>
+</dd>
+<dt class="field-even">Результат</dt>
+<dd class="field-even"><p>Сообщение со временем или сообщение об ошибке ввода времени</p>
+</dd>
+<dt class="field-odd">Тип результата</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="main.get_weather">
+<code class="sig-prename descclassname"><span class="pre">main.</span></code><code class="sig-name descname"><span class="pre">get_weather</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">city</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#main.get_weather" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Функция получения погоды</p>
+<p>На вход получает сообщение с информацией о городе,
+после чего отправляет GET-запрос к OpenWeaterMap API, в результате получает данные о погоде
+или сообщение о вызванном исключении, если не удалось получить JSON с информацией.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Параметры</dt>
+<dd class="field-odd"><p><strong>city</strong> – Город</p>
+</dd>
+<dt class="field-even">Результат</dt>
+<dd class="field-even"><p>Кортеж данных о погоде (осадки, температура)</p>
+</dd>
+<dt class="field-odd">Тип результата</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="main.keyboard_confirmation">
+<code class="sig-prename descclassname"><span class="pre">main.</span></code><code class="sig-name descname"><span class="pre">keyboard_confirmation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#main.keyboard_confirmation" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Функция подтверждения добавления желаемого прогноза</p>
+<p>Принимает на вход сообщение (информацию об отправителе сообщения), выводит две кнопки «Да» и «Нет»,
+результат выбора которых передаётся в обработчик ответов.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Параметры</dt>
+<dd class="field-odd"><p><strong>message</strong> (<em>messageObject</em>) – Пользовательское сообщение с информацией об отправителе</p>
+</dd>
+<dt class="field-even">Результат</dt>
+<dd class="field-even"><p><cite>True</cite>, если вызов keyboard_confirmation() успешен, иначе <cite>False</cite></p>
+</dd>
+<dt class="field-odd">Тип результата</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="main.mail">
+<code class="sig-prename descclassname"><span class="pre">main.</span></code><code class="sig-name descname"><span class="pre">mail</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#main.mail" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Функция отправления прогноза погоды</p>
+<p>Непрерывно получает время, если оно совпадает со временем прогноза из базы данных,
+то получает прогноз погоды, а затем отправляет соответствующему пользователю.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Параметры</dt>
+<dd class="field-odd"><p><strong>time</strong> – Текущее время</p>
+</dd>
+<dt class="field-even">Результат</dt>
+<dd class="field-even"><p>Сообщение пользователю с прогнозом погоды</p>
+</dd>
+<dt class="field-odd">Тип результата</dt>
+<dd class="field-odd"><p>messageObject</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="main.set_city">
+<code class="sig-prename descclassname"><span class="pre">main.</span></code><code class="sig-name descname"><span class="pre">set_city</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#main.set_city" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Функция установки города</p>
+<p>Выдаёт подсказку с просьбой ввести город, после чего вызывает get_city()</p>
+<dl class="field-list simple">
+<dt class="field-odd">Параметры</dt>
+<dd class="field-odd"><p><strong>message</strong> (<em>messageObject</em>) – Пользовательское сообщение с названием города</p>
+</dd>
+<dt class="field-even">Результат</dt>
+<dd class="field-even"><p><cite>True</cite>, если вызов get_city() успешен, иначе <cite>False</cite></p>
+</dd>
+<dt class="field-odd">Тип результата</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="main.set_time">
+<code class="sig-prename descclassname"><span class="pre">main.</span></code><code class="sig-name descname"><span class="pre">set_time</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#main.set_time" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Функция установки времени для отправки сообщения с прогнозом погоды</p>
+<p>Принимает на вход сообщение, содержащее информацию о времени,
+после чего вызывает функцию получения времени get_time().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Параметры</dt>
+<dd class="field-odd"><p><strong>message</strong> (<em>messageObject</em>) – Пользовательское сообщение со временем</p>
+</dd>
+<dt class="field-even">Результат</dt>
+<dd class="field-even"><p><cite>True</cite>, если вызов get_time() успешен, иначе <cite>False</cite></p>
+</dd>
+<dt class="field-odd">Тип результата</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="main.start">
+<code class="sig-prename descclassname"><span class="pre">main.</span></code><code class="sig-name descname"><span class="pre">start</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#main.start" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Обработчик сообщений</p>
+<dl class="field-list simple">
+<dt class="field-odd">Параметры</dt>
+<dd class="field-odd"><p><strong>message</strong> (<em>messageObject</em>) – Пользовательское сообщение с текстом команды</p>
+</dd>
+<dt class="field-even">Результат</dt>
+<dd class="field-even"><p>Задача добавления set_city(message), удаления del_st(message), изменения change_st(message) записи из расписания или подсказка о начале работы с ботом</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="main.wrong_city">
+<code class="sig-prename descclassname"><span class="pre">main.</span></code><code class="sig-name descname"><span class="pre">wrong_city</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#main.wrong_city" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Функция информирования о неправильном вводе города</p>
+<p>Принимает на вход сообщение с информацией об отправителе,
+после чего передаёт обработчику информацию о вызове функции получения города get_city() 
+и выводит сообщение пользователю.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Параметры</dt>
+<dd class="field-odd"><p><strong>message</strong> (<em>messageObject</em>) – Пользовательское сообщение с информацией об отправителе</p>
+</dd>
+<dt class="field-even">Результат</dt>
+<dd class="field-even"><p>Сообщение об ошибке ввода города</p>
+</dd>
+<dt class="field-odd">Тип результата</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="main.wrong_time">
+<code class="sig-prename descclassname"><span class="pre">main.</span></code><code class="sig-name descname"><span class="pre">wrong_time</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#main.wrong_time" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Функция информирования о неправильном вводе времени</p>
+<p>На вход получает информацию об отправителе сообщения,
+после чего передаёт обработчику информацию о вызове функции получения времени get_time().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Параметры</dt>
+<dd class="field-odd"><p><strong>message</strong> (<em>messageObject</em>) – Пользовательское сообщение с информацией об отправителе</p>
+</dd>
+<dt class="field-even">Результат</dt>
+<dd class="field-even"><p>Сообщение об ошибке ввода времени</p>
+</dd>
+<dt class="field-odd">Тип результата</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Kulagin &amp; Bartenev.
+
+    </p>
+  </div>
+    
+    
+    
+    Собрано при помощи <a href="https://www.sphinx-doc.org/">Sphinx</a> с использованием
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">темы,</a>
+    
+    предоставленной <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
