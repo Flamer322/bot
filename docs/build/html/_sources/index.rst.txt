@@ -10,6 +10,10 @@ Welcome to WeatherBot's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   main
+   modules
+   config
+
 
 Indices and tables
 ==================

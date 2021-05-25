@@ -6,7 +6,7 @@ setup(
   version='0.0.3',
   username='Ivan-Kulagin',
   author='Kulagin & Bartenev',
-  author_email='b.bar1enev@gmail.com',
+  author_email='b.bar1enev@gmail.com; ivan.kulagin2001@gmail.com',
   packages=['weather'],
   url='https://github.com/Flamer322/bot',
   description='Telegram API based WeatherBot',
