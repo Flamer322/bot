@@ -1,8 +1,6 @@
 from weather import config
 from weather.config import *
 
-print("Starting")
-
 bot = telebot.TeleBot(config.token)
 
 conn = sqlite3.connect("users.db")
@@ -336,12 +334,6 @@ def callback_worker(call):
 
 
 def mail():
-    left = (60 - datetime.datetime.now().second)
-    while left > 0:
-        if left % 5 == 0:
-            print(str(left) + "s left")
-        sleep(1)
-        left -= 1
 
     while True:
         now = datetime.datetime.now().strftime("%H:%M")
