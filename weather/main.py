@@ -203,14 +203,16 @@ def del_2(message):
             entries = cur.fetchall()
             if not entries:
                 bot.send_message(message.from_user.id, "Введён неправильный прогноз")
+                del_1(message)
             else:
                 bot.send_message(message.from_user.id, "Прогноз удалён")
                 cur.execute("DELETE FROM users WHERE user_id = ? AND city = ? AND time = ?",
                             (message.from_user.id, text[0], text[1]))
                 conn.commit()
+                start_msg(message.from_user.id)
         else:
             bot.send_message(message.from_user.id, "Введён неправильный прогноз")
-        start_msg(message.from_user.id)
+            del_1(message)
 
 
 def set_city(message):
