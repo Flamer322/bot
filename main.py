@@ -68,6 +68,8 @@ def ch_2(message):
             if not entries:
                 bot.send_message(message.from_user.id, "Введён неправильный прогноз")
             else:
+                config.city = text[0]
+                config.time = text[1]
                 markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
                 list_items = ["Город", "Время", "Город и время"]
                 for item in list_items:
@@ -82,14 +84,94 @@ def ch_2(message):
 def ch_3(message):
     if message.text in ["Город", "Время", "Город и время"]:
         if message.text == "Город":
-            print("1")
+            bot.send_message(message.from_user.id, "Укажите Ваш город")
+            bot.register_next_step_handler(message, ch_c)
         elif message.text == "Время":
-            print("2")
+            bot.send_message(message.from_user.id, "Выберите время (Москва, UTC+3), в которое Вы желаете получать"
+                                                   " прогноз\n\nУкажите время в формате ЧЧ:ММ")
+            bot.register_next_step_handler(message, ch_t)
         else:
-            print("3")
+            bot.send_message(message.from_user.id, "Укажите Ваш город")
+            bot.register_next_step_handler(message, ch_ct1)
     else:
-        print("4")
-    start_msg(message.from_user.id)
+        start_msg(message.from_user.id)
+
+
+def ch_c(message):
+    if message.text == "/start":
+        return start(message)
+    new_city = abb_to_city(message.text)
+    city_id = get_city_id(new_city)
+    if not city_id:
+        wrong_city1(message)
+    else:
+        ch_4(message.from_user.id, new_city, config.time)
+
+
+def wrong_city1(message):
+    bot.send_message(message.from_user.id, "Неправильное название города."
+                                           "\nПожалуйста, попробуй ещё раз")
+    bot.register_next_step_handler(message, ch_c)
+
+
+def ch_t(message):
+    if message.text == "/start":
+        return start(message)
+    if re.fullmatch(r"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
+        new_time = message.text
+        ch_4(message.from_user.id, config.city, new_time)
+    else:
+        wrong_time1(message)
+
+
+def wrong_time1(message):
+    bot.send_message(message.from_user.id, "Неправильно введено время."
+                                           "\nПожалуйста, введите время ещё раз")
+    bot.register_next_step_handler(message, get_time)
+
+
+def ch_ct1(message):
+    if message.text == "/start":
+        return start(message)
+    new_city = abb_to_city(message.text)
+    city_id = get_city_id(new_city)
+    if not city_id:
+        wrong_city2(message)
+    else:
+        bot.send_message(message.from_user.id, "Выберите время (Москва, UTC+3), в которое Вы желаете получать"
+                                               " прогноз\n\nУкажите время в формате ЧЧ:ММ")
+        bot.register_next_step_handler(message, ch_ct2, new_city)
+
+
+def ch_ct2(message, new_city):
+    if message.text == "/start":
+        return start(message)
+    if re.fullmatch(r"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
+        new_time = message.text
+        ch_4(message.from_user.id, new_city, new_time)
+    else:
+        wrong_time2(message)
+
+
+def wrong_city2(message):
+    bot.send_message(message.from_user.id, "Неправильное название города."
+                                           "\nПожалуйста, попробуй ещё раз")
+    bot.register_next_step_handler(message, ch_c)
+
+
+def wrong_time2(message):
+    bot.send_message(message.from_user.id, "Неправильно введено время."
+                                           "\nПожалуйста, введите время ещё раз")
+    bot.register_next_step_handler(message, get_time)
+
+
+def ch_4(user_id, new_city, new_time):
+    conn = sqlite3.connect("users.db")
+    cur = conn.cursor()
+    cur.execute("UPDATE users SET city = ?, time = ? WHERE user_id = ? AND city = ? AND time = ?",
+                (new_city, new_time, user_id, config.city, config.time))
+    conn.commit()
+    start_msg(user_id)
 
 
 def del_1(message):
@@ -110,7 +192,7 @@ def del_1(message):
 
 def del_2(message):
     if message.text == "Я передумал(а)":
-        start(message)
+        start_msg(message.from_user.id)
     else:
         if re.search(r"\n([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
             text = message.text.split("\n")
