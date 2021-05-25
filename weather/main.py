@@ -1,5 +1,5 @@
-import config
-from config import *
+from weather import config
+from weather.config import *
 
 print("Starting")
 
