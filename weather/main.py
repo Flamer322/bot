@@ -1,8 +1,6 @@
 from weather import config
 from weather.config import *
 
-print("Starting")
-
 bot = telebot.TeleBot(config.token)
 
 conn = sqlite3.connect("users.db")
@@ -11,10 +9,17 @@ cur = conn.cursor()
 cur.execute("""CREATE TABLE IF NOT EXISTS users(
     user_id INT,
     city TEXT,
-    time_h TEXT,
-    time_m TEXT);
+    time TEXT);
 """)
 conn.commit()
+
+
+def start_msg(chat_id):
+    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+    list_items = ["Добавить", "Удалить", "Изменить"]
+    for item in list_items:
+        markup.add(item)
+    bot.send_message(chat_id, "Выберите пункт меню", reply_markup=markup)
 
 
 @bot.message_handler(content_types=["text"])
@@ -26,29 +31,21 @@ def start(message):
     :return:govno
     """
     if message.text == "/start":
-        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
-        list_items = ["Добавить", "Удалить", "Изменить"]
-        for item in list_items:
-            markup.add(item)
-        bot.send_message(message.chat.id, "Привет", reply_markup=markup)
+        start_msg(message.chat.id)
     elif message.text == "Добавить":
         set_city(message)
     elif message.text == "Удалить":
-        del_st(message)
+        del_1(message)
     elif message.text == "Изменить":
-        bot.send_message(message.chat.id, "WIP")
+        ch_1(message)
     else:
-        bot.send_message(message.from_user.id, "Начните работу с ботом\n\nИспользуйте команду /start")
+        start_msg(message.from_user.id)
 
 
-def del_st(message):
-    """"Удаление записи с прогнозом погоды из базы данных
-
-    Принимает на вход сообщение, содержащее информацию о прогнозе, после чего удаляет нужный прогноз из расписания.
-    """
+def ch_1(message):
     conn = sqlite3.connect("users.db")
     cur = conn.cursor()
-    cur.execute("SELECT city, time_h, time_m FROM users WHERE user_id = ?", (message.from_user.id,))
+    cur.execute("SELECT city, time FROM users WHERE user_id = ?", (message.from_user.id,))
     entries = cur.fetchall()
     if not entries:
         bot.send_message(message.from_user.id, "Вы не добавляли никаких прогнозов")
@@ -56,9 +53,174 @@ def del_st(message):
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         markup.add("Я передумал(а)")
         for entry in entries:
-            markup.add(entry[0] + "\n" + entry[1] + ":" + entry[2])
-        bot.send_message(message.chat.id, "Выбери прогноз, который нужно удалить", reply_markup=markup)
-        bot.register_next_step_handler(message, start)
+            markup.add(entry[0] + "\n" + entry[1])
+        bot.send_message(message.chat.id, "Выберите прогноз, который нужно изменить", reply_markup=markup)
+        bot.register_next_step_handler(message, ch_2)
+
+
+def ch_2(message):
+    if message.text == "Я передумал(а)":
+        start(message)
+    else:
+        if re.search(r"\n([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
+            text = message.text.split("\n")
+            conn = sqlite3.connect("users.db")
+            cur = conn.cursor()
+            cur.execute("SELECT user_id, city, time FROM users WHERE user_id = ? AND city = ? AND time = ?",
+                        (message.from_user.id, text[0], text[1]))
+            entries = cur.fetchall()
+            if not entries:
+                bot.send_message(message.from_user.id, "Введён неправильный прогноз")
+            else:
+                config.city = text[0]
+                config.time = text[1]
+                markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+                list_items = ["Город", "Время", "Город и время"]
+                for item in list_items:
+                    markup.add(item)
+                bot.send_message(message.from_user.id, "Что вы хотите изменить", reply_markup=markup)
+                bot.register_next_step_handler(message, ch_3)
+        else:
+            bot.send_message(message.from_user.id, "Введён неправильный прогноз")
+            start_msg(message.from_user.id)
+
+
+def ch_3(message):
+    if message.text in ["Город", "Время", "Город и время"]:
+        if message.text == "Город":
+            bot.send_message(message.from_user.id, "Укажите Ваш город")
+            bot.register_next_step_handler(message, ch_c)
+        elif message.text == "Время":
+            bot.send_message(message.from_user.id, "Выберите время (Москва, UTC+3), в которое Вы желаете получать"
+                                                   " прогноз\n\nУкажите время в формате ЧЧ:ММ")
+            bot.register_next_step_handler(message, ch_t)
+        else:
+            bot.send_message(message.from_user.id, "Укажите Ваш город")
+            bot.register_next_step_handler(message, ch_ct1)
+    else:
+        start_msg(message.from_user.id)
+
+
+def ch_c(message):
+    if message.text == "/start":
+        return start(message)
+    new_city = abb_to_city(message.text)
+    city_id = get_city_id(new_city)
+    if not city_id:
+        wrong_city1(message)
+    else:
+        ch_4(message.from_user.id, new_city, config.time)
+
+
+def wrong_city1(message):
+    bot.send_message(message.from_user.id, "Неправильное название города."
+                                           "\nПожалуйста, попробуй ещё раз")
+    bot.register_next_step_handler(message, ch_c)
+
+
+def ch_t(message):
+    if message.text == "/start":
+        return start(message)
+    if re.fullmatch(r"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
+        new_time = message.text
+        ch_4(message.from_user.id, config.city, new_time)
+    else:
+        wrong_time1(message)
+
+
+def wrong_time1(message):
+    bot.send_message(message.from_user.id, "Неправильно введено время."
+                                           "\nПожалуйста, введите время ещё раз")
+    bot.register_next_step_handler(message, get_time)
+
+
+def ch_ct1(message):
+    if message.text == "/start":
+        return start(message)
+    new_city = abb_to_city(message.text)
+    city_id = get_city_id(new_city)
+    if not city_id:
+        wrong_city2(message)
+    else:
+        bot.send_message(message.from_user.id, "Выберите время (Москва, UTC+3), в которое Вы желаете получать"
+                                               " прогноз\n\nУкажите время в формате ЧЧ:ММ")
+        bot.register_next_step_handler(message, ch_ct2, new_city)
+
+
+def ch_ct2(message, new_city):
+    if message.text == "/start":
+        return start(message)
+    if re.fullmatch(r"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
+        new_time = message.text
+        ch_4(message.from_user.id, new_city, new_time)
+    else:
+        wrong_time2(message)
+
+
+def wrong_city2(message):
+    bot.send_message(message.from_user.id, "Неправильное название города."
+                                           "\nПожалуйста, попробуй ещё раз")
+    bot.register_next_step_handler(message, ch_c)
+
+
+def wrong_time2(message):
+    bot.send_message(message.from_user.id, "Неправильно введено время."
+                                           "\nПожалуйста, введите время ещё раз")
+    bot.register_next_step_handler(message, get_time)
+
+
+def ch_4(user_id, new_city, new_time):
+    conn = sqlite3.connect("users.db")
+    cur = conn.cursor()
+    cur.execute("UPDATE users SET city = ?, time = ? WHERE user_id = ? AND city = ? AND time = ?",
+                (new_city, new_time, user_id, config.city, config.time))
+    conn.commit()
+    start_msg(user_id)
+
+
+def del_1(message):
+    """"Удаление записи с прогнозом погоды из базы данных
+
+    Принимает на вход сообщение, содержащее информацию о прогнозе, после чего удаляет нужный прогноз из расписания.
+    """
+    conn = sqlite3.connect("users.db")
+    cur = conn.cursor()
+    cur.execute("SELECT city, time FROM users WHERE user_id = ?", (message.from_user.id,))
+    entries = cur.fetchall()
+    if not entries:
+        bot.send_message(message.from_user.id, "Вы не добавляли никаких прогнозов")
+    else:
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+        markup.add("Я передумал(а)")
+        for entry in entries:
+            markup.add(entry[0] + "\n" + entry[1])
+        bot.send_message(message.chat.id, "Выберите прогноз, который нужно удалить", reply_markup=markup)
+        bot.register_next_step_handler(message, del_2)
+
+
+def del_2(message):
+    if message.text == "Я передумал(а)":
+        start_msg(message.from_user.id)
+    else:
+        if re.search(r"\n([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
+            text = message.text.split("\n")
+            conn = sqlite3.connect("users.db")
+            cur = conn.cursor()
+            cur.execute("SELECT user_id, city, time FROM users WHERE user_id = ? AND city = ? AND time = ?",
+                        (message.from_user.id, text[0], text[1]))
+            entries = cur.fetchall()
+            if not entries:
+                bot.send_message(message.from_user.id, "Введён неправильный прогноз")
+                del_1(message)
+            else:
+                bot.send_message(message.from_user.id, "Прогноз удалён")
+                cur.execute("DELETE FROM users WHERE user_id = ? AND city = ? AND time = ?",
+                            (message.from_user.id, text[0], text[1]))
+                conn.commit()
+                start_msg(message.from_user.id)
+        else:
+            bot.send_message(message.from_user.id, "Введён неправильный прогноз")
+            del_1(message)
 
 
 def set_city(message):
@@ -78,7 +240,6 @@ def get_city(message):
     """
     if message.text == "/start":
         return start(message)
-
     config.city = abb_to_city(message.text)
     city_id = get_city_id(config.city)
     if not city_id:
@@ -110,16 +271,7 @@ def get_time(message):
     if message.text == "/start":
         return start(message)
     if re.fullmatch(r"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
-        separator_index = message.text.find(":")
-        config.time_h = message.text[0:separator_index]
-        config.time_m = message.text[separator_index + 1:len(message.text)]
-
-        if int(config.time_h) < 10:
-            config.time_h = "0" + config.time_h
-
-        if int(config.time_m) < 10:
-            config.time_m = "0" + config.time_m
-
+        config.time = message.text.zfill(5)
         keyboard_confirmation(message)
     else:
         wrong_time(message)
@@ -142,7 +294,7 @@ def keyboard_confirmation(message):
     keyboard.add(key_no)
 
     question = "Ваш город " + config.city + ".\nВы хотите получать прогноз в " + \
-               config.time_h + ":" + config.time_m + ".\n\nВерно?"
+               config.time + ".\n\nВерно?"
     bot.send_message(message.from_user.id, text=question, reply_markup=keyboard)
 
 
@@ -169,7 +321,6 @@ def wrong_time(message):
 
 
 def get_city_id(city):
-    print(city)
     """Функция получения идентификатора города
 
     На вход получает сообщение с информацией о городе,
@@ -201,7 +352,7 @@ def get_weather(city):
         data = res.json()
         conditions = data['weather'][0]['description']
         temp = round(data['main']['temp'])
-        return (conditions, temp)
+        return conditions, temp
     except Exception as e:
         print("Exception (weather):", e)
         pass
@@ -238,7 +389,8 @@ def callback_worker(call):
         else:
             bot.send_message(call.message.chat.id, "Вы уже добавили такой прогноз")
     elif call.data == "no":
-        bot.send_message(call.message.chat.id, "Введите команду /start")
+        print("TO DO")
+    start_msg(call.message.chat.id)
     # elif call.data == "set_city":
     #    config.changed = True
     #    return set_city(call.message)
@@ -252,31 +404,13 @@ def mail():
     Непрерывно получает время, если оно совпадает со временем прогноза из базы данных,
     то вызывается функция получения прогноза погоды, а затем отправляется соответствующему пользователю.
     """
-    left = (60 - datetime.datetime.now().second)
-    while (left > 0):
-        if left % 5 == 0:
-            print(str(left) + "s left")
-        time.sleep(1)
-        left -= 1
-
     while True:
-        now_h = datetime.datetime.now().hour
-        now_m = datetime.datetime.now().minute
-
-        if now_h < 10:
-            now_h = "0" + str(now_h)
-        else:
-            now_h = str(now_h)
-
-        if now_m < 10:
-            now_m = "0" + str(now_m)
-        else:
-            now_m = str(now_m)
+        now = datetime.datetime.now().strftime("%H:%M")
 
         conn = sqlite3.connect("users.db")
         cur = conn.cursor()
 
-        cur.execute("SELECT user_id, city FROM users WHERE time_h = ? AND time_m = ?", (now_h, now_m))
+        cur.execute("SELECT user_id, city FROM users WHERE time = ?", (now,))
 
         users = cur.fetchall()
 
@@ -285,7 +419,7 @@ def mail():
             message = user[1] + "\nПогода: " + weather[0] + "\nТемпература: " + str(weather[1])
             bot.send_message(user[0], message)
 
-        time.sleep(60)
+        sleep(60)
 
 
 mail = threading.Thread(target=mail, args=(), daemon=True)
