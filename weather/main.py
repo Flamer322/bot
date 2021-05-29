@@ -79,7 +79,7 @@ def get_city(message):
     if message.text == "/start":
         return start(message)
 
-    city = abb_to_city(message.text)
+    config.city = abb_to_city(message.text)
     city_id = get_city_id(config.city)
     if not city_id:
         wrong_city(message)
@@ -169,6 +169,7 @@ def wrong_time(message):
 
 
 def get_city_id(city):
+    print(city)
     """Функция получения идентификатора города
 
     На вход получает сообщение с информацией о городе,
