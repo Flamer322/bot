@@ -175,6 +175,7 @@ def ch_4(user_id, new_city, new_time):
     cur.execute("UPDATE users SET city = ?, time = ? WHERE user_id = ? AND city = ? AND time = ?",
                 (new_city, new_time, user_id, config.city, config.time))
     conn.commit()
+    bot.send_message(user_id, "Прогноз изменён")
     start_msg(user_id)
 
 
@@ -379,11 +380,11 @@ def callback_worker(call):
     if call.data == "yes":
         conn = sqlite3.connect("users.db")
         cur = conn.cursor()
-        user = (call.message.chat.id, config.city, config.time_h, config.time_m)
-        cur.execute("SELECT user_id FROM users WHERE user_id = ? AND city = ? AND time_h = ? AND time_m = ?", user)
+        user = (call.message.chat.id, config.city, config.time)
+        cur.execute("SELECT user_id FROM users WHERE user_id = ? AND city = ? AND time = ?", user)
         users = cur.fetchall()
         if not users:
-            cur.execute("INSERT INTO users VALUES(?, ?, ?, ?);", user)
+            cur.execute("INSERT INTO users VALUES(?, ?, ?);", user)
             conn.commit()
             bot.send_message(call.message.chat.id, "Вы будете получать прогноз каждый день в указанное время")
         else:
@@ -404,6 +405,9 @@ def mail():
     Непрерывно получает время, если оно совпадает со временем прогноза из базы данных,
     то вызывается функция получения прогноза погоды, а затем отправляется соответствующему пользователю.
     """
+    left = (60 - datetime.datetime.now().second)
+    sleep(left)
+
     while True:
         now = datetime.datetime.now().strftime("%H:%M")
 
