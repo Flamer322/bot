@@ -16,7 +16,7 @@ conn.commit()
 
 def start_msg(chat_id):
     markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
-    list_items = ["Добавить", "Удалить", "Изменить"]
+    list_items = ["Добавить", "Удалить", "Изменить", "Прогноз"]
     for item in list_items:
         markup.add(item)
     bot.send_message(chat_id, "Выберите пункт меню", reply_markup=markup)
@@ -38,8 +38,30 @@ def start(message):
         del_1(message)
     elif message.text == "Изменить":
         ch_1(message)
+    elif message.text == "Прогноз":
+        ff_1(message)
     else:
         start_msg(message.from_user.id)
+
+
+def ff_1(message):
+    bot.send_message(message.from_user.id, "Укажите Ваш город")
+    bot.register_next_step_handler(message, ff_2)
+
+
+def ff_2(message):
+    if message.text == "/start":
+        return start(message)
+    config.city = abb_to_city(message.text)
+    city_id = get_city_id(config.city)
+    if not city_id:
+        wrong_city(message, ff_1)
+    else:
+        weather = get_weather(config.city)
+        text = config.city + "\nПогода: " + weather[0] + "\nТемпература: " + str(weather[1])
+        bot.send_message(message.from_user.id, text)
+        start_msg(message.from_user.id)
+
 
 
 def ch_1(message):
@@ -49,6 +71,7 @@ def ch_1(message):
     entries = cur.fetchall()
     if not entries:
         bot.send_message(message.from_user.id, "Вы не добавляли никаких прогнозов")
+        start_msg(message.from_user.id)
     else:
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         markup.add("Я передумал(а)")
@@ -88,14 +111,14 @@ def ch_2(message):
 def ch_3(message):
     if message.text in ["Город", "Время", "Город и время"]:
         if message.text == "Город":
-            bot.send_message(message.from_user.id, "Укажите Ваш город")
+            bot.send_message(message.from_user.id, "Укажите новый город")
             bot.register_next_step_handler(message, ch_c)
         elif message.text == "Время":
-            bot.send_message(message.from_user.id, "Выберите время (Москва, UTC+3), в которое Вы желаете получать"
+            bot.send_message(message.from_user.id, "Выберите новое время (Москва, UTC+3), в которое Вы желаете получать"
                                                    " прогноз\n\nУкажите время в формате ЧЧ:ММ")
             bot.register_next_step_handler(message, ch_t)
         else:
-            bot.send_message(message.from_user.id, "Укажите Ваш город")
+            bot.send_message(message.from_user.id, "Укажите новый город")
             bot.register_next_step_handler(message, ch_ct1)
     else:
         start_msg(message.from_user.id)
@@ -104,76 +127,58 @@ def ch_3(message):
 def ch_c(message):
     if message.text == "/start":
         return start(message)
-    new_city = abb_to_city(message.text)
-    city_id = get_city_id(new_city)
+    config.new_city = abb_to_city(message.text)
+    city_id = get_city_id(config.new_city)
     if not city_id:
-        wrong_city1(message)
+        wrong_city(message, ch_c)
     else:
-        ch_4(message.from_user.id, new_city, config.time)
-
-
-def wrong_city1(message):
-    bot.send_message(message.from_user.id, "Неправильное название города."
-                                           "\nПожалуйста, попробуй ещё раз")
-    bot.register_next_step_handler(message, ch_c)
+        config.new_time = config.time
+        ch_4(message.from_user.id)
 
 
 def ch_t(message):
     if message.text == "/start":
         return start(message)
     if re.fullmatch(r"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
-        new_time = message.text
-        ch_4(message.from_user.id, config.city, new_time)
+        config.new_time = message.text
+        config.new_city = config.city
+        ch_4(message.from_user.id)
     else:
-        wrong_time1(message)
-
-
-def wrong_time1(message):
-    bot.send_message(message.from_user.id, "Неправильно введено время."
-                                           "\nПожалуйста, введите время ещё раз")
-    bot.register_next_step_handler(message, get_time)
+        wrong_time(message, ch_t)
 
 
 def ch_ct1(message):
     if message.text == "/start":
         return start(message)
-    new_city = abb_to_city(message.text)
-    city_id = get_city_id(new_city)
+    config.new_city = abb_to_city(message.text)
+    city_id = get_city_id(config.new_city)
     if not city_id:
-        wrong_city2(message)
+        wrong_city(message, ch_ct1)
     else:
-        bot.send_message(message.from_user.id, "Выберите время (Москва, UTC+3), в которое Вы желаете получать"
+        bot.send_message(message.from_user.id, "Выберите новое время (Москва, UTC+3), в которое Вы желаете получать"
                                                " прогноз\n\nУкажите время в формате ЧЧ:ММ")
-        bot.register_next_step_handler(message, ch_ct2, new_city)
+        bot.register_next_step_handler(message, ch_ct2)
 
 
-def ch_ct2(message, new_city):
+def ch_ct2(message):
     if message.text == "/start":
         return start(message)
     if re.fullmatch(r"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
-        new_time = message.text
-        ch_4(message.from_user.id, new_city, new_time)
+        config.new_time = message.text
+        ch_4(message.from_user.id)
     else:
-        wrong_time2(message)
+        wrong_time(message, ch_ct2)
 
 
-def wrong_city2(message):
-    bot.send_message(message.from_user.id, "Неправильное название города."
-                                           "\nПожалуйста, попробуй ещё раз")
-    bot.register_next_step_handler(message, ch_c)
-
-
-def wrong_time2(message):
-    bot.send_message(message.from_user.id, "Неправильно введено время."
-                                           "\nПожалуйста, введите время ещё раз")
-    bot.register_next_step_handler(message, get_time)
-
-
-def ch_4(user_id, new_city, new_time):
+def ch_4(user_id):
     conn = sqlite3.connect("users.db")
     cur = conn.cursor()
-    cur.execute("UPDATE users SET city = ?, time = ? WHERE user_id = ? AND city = ? AND time = ?",
-                (new_city, new_time, user_id, config.city, config.time))
+    cur.execute("DELETE FROM users WHERE user_id = ? AND city = ? AND time = ?",
+                (user_id, config.city, config.time))
+    cur.execute("DELETE FROM users WHERE user_id = ? AND city = ? AND time = ?",
+                (user_id, config.new_city, config.new_time))
+    cur.execute("INSERT INTO users VALUES(?, ?, ?);",
+                (user_id, config.new_city, config.new_time))
     conn.commit()
     bot.send_message(user_id, "Прогноз изменён")
     start_msg(user_id)
@@ -190,6 +195,7 @@ def del_1(message):
     entries = cur.fetchall()
     if not entries:
         bot.send_message(message.from_user.id, "Вы не добавляли никаких прогнозов")
+        start_msg(message.from_user.id)
     else:
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         markup.add("Я передумал(а)")
@@ -244,7 +250,7 @@ def get_city(message):
     config.city = abb_to_city(message.text)
     city_id = get_city_id(config.city)
     if not city_id:
-        wrong_city(message)
+        wrong_city(message, get_city)
     elif config.changed:
         keyboard_confirmation(message)
         config.changed = False
@@ -275,7 +281,7 @@ def get_time(message):
         config.time = message.text.zfill(5)
         keyboard_confirmation(message)
     else:
-        wrong_time(message)
+        wrong_time(message, get_time)
 
 
 def keyboard_confirmation(message):
@@ -299,7 +305,7 @@ def keyboard_confirmation(message):
     bot.send_message(message.from_user.id, text=question, reply_markup=keyboard)
 
 
-def wrong_city(message):
+def wrong_city(message, function):
     """Функция информирования о неправильном вводе города
 
     На вход получает информацию об отправителе сообщения,
@@ -307,10 +313,10 @@ def wrong_city(message):
     """
     bot.send_message(message.from_user.id, "Неправильное название города."
                                      "\nПожалуйста, попробуй ещё раз")
-    bot.register_next_step_handler(message, get_city)
+    bot.register_next_step_handler(message, function)
 
 
-def wrong_time(message):
+def wrong_time(message, function):
     """Функция информирования о неправильном вводе времени
 
     На вход получает информацию об отправителе сообщения,
@@ -318,7 +324,7 @@ def wrong_time(message):
     """
     bot.send_message(message.from_user.id, "Неправильно введено время."
                                      "\nПожалуйста, введите время ещё раз")
-    bot.register_next_step_handler(message, get_time)
+    bot.register_next_step_handler(message, function)
 
 
 def get_city_id(city):
@@ -422,6 +428,7 @@ def mail():
             weather = get_weather(user[1])
             message = user[1] + "\nПогода: " + weather[0] + "\nТемпература: " + str(weather[1])
             bot.send_message(user[0], message)
+            start_msg(user[0])
 
         sleep(60)
 
