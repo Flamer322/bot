@@ -58,10 +58,15 @@ def ff_2(message):
         wrong_city(message, ff_1)
     else:
         weather = get_weather(config.city)
-        text = config.city + "\nПогода: " + weather[0] + "\nТемпература: " + str(weather[1])
-        bot.send_message(message.from_user.id, text)
+        text = config.city + "\nПогода: " + str(weather[0]) + "\nТемпература: " + str(weather[1]) \
+               + "°C\nСкорость ветра: " + str(weather[2]) + " м/с\nНаправление ветра: " + str(weather[3])
+        response = requests.get("http://openweathermap.org/img/wn/" + weather[4] + "@4x.png")
+        file = open("image.png", "wb")
+        file.write(response.content)
+        file.close()
+        img = open("image.png", "rb")
+        bot.send_photo(message.from_user.id, img, text)
         start_msg(message.from_user.id)
-
 
 
 def ch_1(message):
@@ -265,7 +270,7 @@ def set_time(message):
     после чего вызывает функцию получения времени.
     """
     bot.send_message(message.from_user.id, "Выберите время (Москва, UTC+3), в которое Вы желаете получать прогноз"
-                                     "\n\nУкажите время в формате ЧЧ:ММ")
+                                           "\n\nУкажите время в формате ЧЧ:ММ")
     bot.register_next_step_handler(message, get_time)
 
 
@@ -312,7 +317,7 @@ def wrong_city(message, function):
     после чего передаёт обработчику информацию о вызове функции получения города.
     """
     bot.send_message(message.from_user.id, "Неправильное название города."
-                                     "\nПожалуйста, попробуй ещё раз")
+                                           "\nПожалуйста, попробуй ещё раз")
     bot.register_next_step_handler(message, function)
 
 
@@ -323,7 +328,7 @@ def wrong_time(message, function):
     после чего передаёт обработчику информацию о вызове функции получения времени.
     """
     bot.send_message(message.from_user.id, "Неправильно введено время."
-                                     "\nПожалуйста, введите время ещё раз")
+                                           "\nПожалуйста, введите время ещё раз")
     bot.register_next_step_handler(message, function)
 
 
@@ -359,7 +364,26 @@ def get_weather(city):
         data = res.json()
         conditions = data['weather'][0]['description']
         temp = round(data['main']['temp'])
-        return conditions, temp
+        wind = round(data['wind']['speed'], 1)
+        windd = data['wind']['deg']
+        icon = data['weather'][0]['icon']
+        if windd == 0:
+            windd = 'С'
+        elif 0 < windd < 90:
+            windd = 'СВ'
+        elif windd == 90:
+            windd = 'В'
+        elif 90 < windd < 180:
+            windd = 'ЮВ'
+        elif windd == 180:
+            windd = 'В'
+        elif 180 < windd < 270:
+            windd = 'ЮЗ'
+        elif windd == 270:
+            windd = 'З'
+        else:
+            windd = 'СЗ'
+        return conditions, temp, wind, windd, icon
     except Exception as e:
         print("Exception (weather):", e)
         pass
@@ -426,7 +450,8 @@ def mail():
 
         for user in users:
             weather = get_weather(user[1])
-            message = user[1] + "\nПогода: " + weather[0] + "\nТемпература: " + str(weather[1])
+            message = user[1] + "\nПогода: " + weather[0] + "\nТемпература: " + str(weather[1]) \
+                      + "\nСкорость ветра: " + str(weather[2]) + " м/с\nНаправление ветра: " + weather[3]
             bot.send_message(user[0], message)
             start_msg(user[0])
 
