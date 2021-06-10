@@ -7,8 +7,12 @@ import datetime
 import telebot
 from telebot import types
 
-token = "1594121133:AAFncSvyiQeogakz4HvSBA1bDkY77cvftrg"
-key = "9923e6ca8852bd98bbd40c6546dd471d"
+f = open('/mnt/data/token.txt')
+token = f.read()
+
+f = open('/mnt/data/key.txt')
+key = f.read()
+
 new_city = ""
 city = ""
 new_time = ""
