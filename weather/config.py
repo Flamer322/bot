@@ -13,6 +13,8 @@ token = f.read()
 f = open('/mnt/data/key.txt')
 key = f.read()
 
+db_path = '/mnt/data/users.db'
+
 new_city = ""
 city = ""
 new_time = ""

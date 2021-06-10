@@ -3,7 +3,7 @@ from weather.config import *
 
 bot = telebot.TeleBot(config.token)
 
-conn = sqlite3.connect("users.db")
+conn = sqlite3.connect(db_path)
 cur = conn.cursor()
 
 cur.execute("""CREATE TABLE IF NOT EXISTS users(
@@ -70,7 +70,7 @@ def ff_2(message):
 
 
 def ch_1(message):
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect(db_path)
     cur = conn.cursor()
     cur.execute("SELECT city, time FROM users WHERE user_id = ?", (message.from_user.id,))
     entries = cur.fetchall()
@@ -92,7 +92,7 @@ def ch_2(message):
     else:
         if re.search(r"\n([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
             text = message.text.split("\n")
-            conn = sqlite3.connect("users.db")
+            conn = sqlite3.connect(db_path)
             cur = conn.cursor()
             cur.execute("SELECT user_id, city, time FROM users WHERE user_id = ? AND city = ? AND time = ?",
                         (message.from_user.id, text[0], text[1]))
@@ -176,7 +176,7 @@ def ch_ct2(message):
 
 
 def ch_4(user_id):
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect(db_path)
     cur = conn.cursor()
     cur.execute("DELETE FROM users WHERE user_id = ? AND city = ? AND time = ?",
                 (user_id, config.city, config.time))
@@ -194,7 +194,7 @@ def del_1(message):
 
     Принимает на вход сообщение, содержащее информацию о прогнозе, после чего удаляет нужный прогноз из расписания.
     """
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect(db_path)
     cur = conn.cursor()
     cur.execute("SELECT city, time FROM users WHERE user_id = ?", (message.from_user.id,))
     entries = cur.fetchall()
@@ -216,7 +216,7 @@ def del_2(message):
     else:
         if re.search(r"\n([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$", message.text):
             text = message.text.split("\n")
-            conn = sqlite3.connect("users.db")
+            conn = sqlite3.connect(db_path)
             cur = conn.cursor()
             cur.execute("SELECT user_id, city, time FROM users WHERE user_id = ? AND city = ? AND time = ?",
                         (message.from_user.id, text[0], text[1]))
@@ -408,7 +408,7 @@ def callback_worker(call):
     При положительном ответе информация заносится в базу данных, иначе выводит подсказку о начале работы с ботом.
     """
     if call.data == "yes":
-        conn = sqlite3.connect("users.db")
+        conn = sqlite3.connect(db_path)
         cur = conn.cursor()
         user = (call.message.chat.id, config.city, config.time)
         cur.execute("SELECT user_id FROM users WHERE user_id = ? AND city = ? AND time = ?", user)
@@ -441,7 +441,7 @@ def mail():
     while True:
         now = datetime.datetime.now().strftime("%H:%M")
 
-        conn = sqlite3.connect("users.db")
+        conn = sqlite3.connect(db_path)
         cur = conn.cursor()
 
         cur.execute("SELECT user_id, city FROM users WHERE time = ?", (now,))
