@@ -42,6 +42,6 @@ pip install -i https://test.pypi.org/simple/ WeatherBotKB
 
 *requirements.txt*
 ```bash 
-requests==2.24.0
-pyTelegramBotAPI==3.7.7
+requests
+pyTelegramBotAPI
 ```
